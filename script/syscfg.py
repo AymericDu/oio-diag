@@ -20,24 +20,31 @@ def cmd(args):
     return subprocess.check_output(args).split('\n')
 
 
-class NetworkStat(object):
+def map_type(v):
+    for t in (int, float, str):
+        try:
+            return t(v)
+        except:
+            pass
+
+
+class SELinux(object):
+
+    def run(self, **kwargs):
+        try:
+            return subprocess.check_output(['getenforce'])
+        except:
+            return ""
+
+
+class Sysctl(object):
 
     def run(self, **kwargs):
         out = dict()
-        out['itf'] = list()
-        for _, itf in enumerate(cmd(['ip', 'addr', 'list'])):
-            out['itf'].append(itf)
-        out['routes'] = list()
-        for r in cmd(['ip', 'route']):
-            if not r:
+        for line in cmd(['sysctl', '-a']):
+            line = line.strip()
+            if not line:
                 continue
-            out['routes'].append(r)
-        out['stat'] = list()
-        for i, st in enumerate(cmd(['netstat', '-st'])):
-            out['stat'].append(st)
-        out['cnx'] = list()
-        for i, cnx in enumerate(cmd(['netstat', '-tupan'])):
-            if not cnx or i < 1:
-                continue
-            out['cnx'].append(cnx)
+            k, v = line.split('=')
+            out[k.strip()] = map_type(v.strip())
         return out

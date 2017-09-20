@@ -16,11 +16,27 @@
 import subprocess
 
 
-class GetEnforce(object):
+def cmd(args):
+    return subprocess.check_output(args).split('\n')
+
+
+class SELinux(object):
 
     def run(self, **kwargs):
         try:
-            out = subprocess.check_output(['getenforce'])
-            return out
+            return subprocess.check_output(['getenforce'])
         except:
-            return None
+            return ""
+
+
+class Sysctl(object):
+
+    def run(self, **kwargs):
+        out = dict()
+        for line in cmd(['sysctl', '-a']):
+            line = line.strip()
+            if not line:
+                continue
+            k, v = line.split('=')
+            out[k.strip()] = v.strip()
+        return out

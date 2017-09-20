@@ -48,9 +48,17 @@ class OioProcessInfo(object):
             proc = dict()
             proc['pid'] = pid
             proc['cmd'] = cmdline
-            proc['env'] = readfile('/proc/%s/environ' % pid)
-            proc['fd'] = os.listdir('/proc/%s/fd' % pid)
-            proc['limits'] = readfile('/proc/%s/limits' % pid)
+            proc['env'] = dict()
+            for pair in readfile('/proc/%s/environ' % pid).split('\0'):
+                pair = pair.strip()
+                if not pair:
+                    continue
+                import logging
+                logging.debug('%s', pair)
+                k, v = pair.split('=', 1)
+                proc['env'][k] = v
+            proc['fd'] = len(os.listdir('/proc/%s/fd' % pid))
+            proc['limits'] = readfile('/proc/%s/limits' % pid).split('\n')
             out.append(proc)
         return out
 

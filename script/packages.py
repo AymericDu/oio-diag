@@ -16,8 +16,30 @@
 import subprocess
 
 
-class ProcessListing(object):
+def cmd(args):
+    return subprocess.check_output(args).split('\n')
+
+
+def hascmd(cmd):
+    try:
+        subprocess.check_output(['/usr/bin/which', cmd])
+        return True
+    except:
+        return False
+
+
+class Packages(object):
 
     def run(self, **kwargs):
-        out = subprocess.check_output(['ps', 'aux']).split('\n')
+        out = {'pkg': [], 'diff': []}
+        if hascmd('rpm'):
+            out['pkg'] = cmd(['rpm', '-qa', '--last'])
+            out['diff'] = cmd(['rpm', '-aV'])
+        elif hascmd('dpkg'):
+            for e in cmd(['dpkg', '-l']):
+                if not e.startswith('ii'):
+                    # Skip packages uninstalled with config leftover
+                    continue
+                tok = e.split()
+                out['pkg'].append('%s %s %s' % (tok[1], tok[2], tok[3]))
         return out

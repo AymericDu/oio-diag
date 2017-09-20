@@ -18,6 +18,10 @@ import re
 import os
 
 
+def cmd(args):
+    return subprocess.check_output(args).split('\n')
+
+
 def readfile(path):
     try:
         return open(path, 'r').read()
@@ -32,18 +36,18 @@ class OioProcessInfo(object):
         ns = kwargs.get('ns')
         if not ns:
             return out
-        for a in subprocess.check_output(['ps', '-o', 'pid,cmd']).split('\n')[1:]:
+        for a in cmd(['ps', '-o', 'pid,cmd'])[1:]:
             a = a.strip()
             if not a:
                 continue
             tok = a.split()
-            pid, cmd = tok[0], ' '.join(tok[1:])
-            if ns not in cmd:
+            pid, cmdline = tok[0], ' '.join(tok[1:])
+            if ns not in cmdline:
                 continue
             pid = int(pid)
             proc = dict()
             proc['pid'] = pid
-            proc['cmd'] = cmd
+            proc['cmd'] = cmdline
             proc['env'] = readfile('/proc/%s/environ' % pid)
             proc['fd'] = os.listdir('/proc/%s/fd' % pid)
             proc['limits'] = readfile('/proc/%s/limits' % pid)
@@ -55,9 +59,8 @@ class OioLocalConfig(object):
 
     def run(self, **kwargs):
         out = dict()
-        output = subprocess.check_output(['oio-cluster', '--local-cfg'])
         p = re.compile('([^/]+)/([^=]+)=(.*)$')
-        for line in output.split('\n'):
+        for line in cmd(['oio-cluster', '--local-cfg']):
             match = p.match(line)
             if not match:
                 continue
@@ -66,4 +69,3 @@ class OioLocalConfig(object):
                 out[ns] = dict()
             out[ns][k] = v
         return out
-

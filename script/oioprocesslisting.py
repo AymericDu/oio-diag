@@ -16,9 +16,12 @@
 import subprocess
 
 
+def cmd(args):
+    return subprocess.check_output(args).split('\n')
+
+
 class OioProcessListing(object):
 
     def run(self, **kwargs):
-        out = subprocess.check_output(['gridinit_cmd', '-S',
-                 kwargs.get('gridinit_sock'), 'status2']).split('\n')
-        return out
+        sock = kwargs.get('gridinit_sock')
+        return cmd(['gridinit_cmd', '-S', sock, 'status2'])

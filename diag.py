@@ -21,6 +21,7 @@ import logging
 import pkg_resources
 import shutil
 import tarfile
+import tempfile
 
 output_list = ['json', 'file', 'tar']
 
@@ -91,9 +92,7 @@ class JsonOutputManager(object):
 class FilesOutputManager(object):
 
     def __init__(self):
-        self.directory = 'result_test'
-        if not os.path.exists(self.directory):
-            os.makedirs(self.directory)
+        self.directory = tempfile.mkdtemp(prefix='oio-diag-')
 
     def create_output(self, module, result):
         if isinstance(result, dict) or isinstance(result, list):
@@ -106,15 +105,17 @@ class FilesOutputManager(object):
             logging.debug("Unmanageable output: %s", repr(result))
 
     def finalize(self):
-        pass
+        print self.directory
 
 
 class ArchiveOutputManager(FilesOutputManager):
 
     def finalize(self):
-        with tarfile.open('%s.tar' % self.directory, 'w') as tar:
+        archive = '%s.tar' % self.directory
+        with tarfile.open(archive, 'w') as tar:
             tar.add(self.directory)
         shutil.rmtree(self.directory)
+        print archive
 
 
 class MailOutputManager(ArchiveOutputManager):

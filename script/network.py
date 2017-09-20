@@ -20,24 +20,37 @@ def cmd(args):
     return subprocess.check_output(args).split('\n')
 
 
-class NetworkStat(object):
+class Network(object):
 
     def run(self, **kwargs):
         out = dict()
+
         out['itf'] = list()
-        for _, itf in enumerate(cmd(['ip', 'addr', 'list'])):
+        for itf in cmd(['ip', 'addr', 'list']):
             out['itf'].append(itf)
+
         out['routes'] = list()
         for r in cmd(['ip', 'route']):
             if not r:
                 continue
             out['routes'].append(r)
+
         out['stat'] = list()
-        for i, st in enumerate(cmd(['netstat', '-st'])):
+        for st in cmd(['netstat', '-st']):
             out['stat'].append(st)
-        out['cnx'] = list()
+
+        out['udp'] = list()
+        out['tcp'] = {'listen': list(), 'counters': dict()}
+        counters = out['tcp']['counters']
         for i, cnx in enumerate(cmd(['netstat', '-tupan'])):
             if not cnx or i < 1:
                 continue
-            out['cnx'].append(cnx)
+            if cnx.startswith('udp'):
+                out['udp'].append(cnx)
+            elif cnx.startswith('tcp'):
+                st = cnx.split(None, 6)[-2]
+                counters[st] = counters.get(st, 0) + 1
+                if st == 'LISTEN':
+                    out['tcp']['listen'].append(cnx)
+
         return out

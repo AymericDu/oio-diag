@@ -15,6 +15,7 @@
 
 import testinfra
 
+
 class TestTestInfra(object):
 
     def run(self, **kwargs):

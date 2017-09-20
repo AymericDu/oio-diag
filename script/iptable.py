@@ -15,8 +15,9 @@
 
 import subprocess
 
+
 class IpTable(object):
 
     def run(self, **kwargs):
-        out = subprocess.check_output(['iptables-save'] )
+        out = subprocess.check_output(['iptables-save'])
         return out

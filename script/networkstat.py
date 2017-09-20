@@ -15,6 +15,7 @@
 
 import subprocess
 
+
 class NetworkStat(object):
 
     def run(self, **kwargs):

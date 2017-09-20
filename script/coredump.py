@@ -15,6 +15,7 @@
 
 import subprocess
 
+
 class CoreDump(object):
 
     def run(self, **kwargs):

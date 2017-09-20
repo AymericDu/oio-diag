@@ -20,6 +20,14 @@ def cmd(args):
     return subprocess.check_output(args).split('\n')
 
 
+def map_type(v):
+    for t in (int, float, str):
+        try:
+            return t(v)
+        except:
+            pass
+
+
 class SELinux(object):
 
     def run(self, **kwargs):
@@ -38,5 +46,5 @@ class Sysctl(object):
             if not line:
                 continue
             k, v = line.split('=')
-            out[k.strip()] = v.strip()
+            out[k.strip()] = map_type(v.strip())
         return out

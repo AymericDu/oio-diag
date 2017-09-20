@@ -19,7 +19,21 @@ import subprocess
 class NetworkStat(object):
 
     def run(self, **kwargs):
-        out = []
-        out.append(subprocess.check_output(['ifconfig']))
-        out.append(subprocess.check_output(['netstat', '-tupan']))
+        out = dict()
+        out['itf'] = list()
+        for _, itf in enumerate(subprocess.check_output(['ip', 'addr', 'list']).split('\n')):
+            out['itf'].append(itf)
+        out['routes'] = list()
+        for r in subprocess.check_output(['ip', 'route']).split('\n'):
+            if not r:
+                continue
+            out['routes'].append(r)
+        out['stat'] = list()
+        for i, st in enumerate(subprocess.check_output(['netstat', '-st']).split('\n')):
+            out['stat'].append(st)
+        out['cnx'] = list()
+        for i, cnx in enumerate(subprocess.check_output(['netstat', '-tupan']).split('\n')):
+            if not cnx or i < 1:
+                continue
+            out['cnx'].append(cnx)
         return out

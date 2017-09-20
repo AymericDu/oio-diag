@@ -86,7 +86,7 @@ class JsonOutputManager(object):
             logging.debug("Unmanageable output: %s", repr(result))
 
     def finalize(self):
-        print json.dumps(self.obj, indent=2)
+        print json.dumps(self.obj, indent=2, sort_keys=True)
 
 
 class FilesOutputManager(object):
@@ -97,7 +97,7 @@ class FilesOutputManager(object):
     def create_output(self, module, result):
         if isinstance(result, dict) or isinstance(result, list):
             with open('%s/%s' % (self.directory, module), 'w') as f:
-                json.dump(result, f, indent=2)
+                json.dump(result, f, indent=2, sort_keys=True)
         elif isinstance(result, basestring) or isinstance(result, buffer):
             with open('%s/%s' % (self.directory, module), 'w') as f:
                 f.write(result)

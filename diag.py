@@ -22,7 +22,7 @@ import pkg_resources
 import shutil
 import tarfile
 
-output_list = ['file', 'tar']
+output_list = ['json', 'file', 'tar']
 
 
 def load_modules(group_name):
@@ -66,12 +66,29 @@ def build_arg_parser():
             dest='output',
             default=output_list[0],
             choices=output_list,
-            help='select the ouput to chose'
+            help='select the ouput method'
     )
     return parser
 
 
-class OutputManager(object):
+class JsonOutputManager(object):
+
+    def __init__(self):
+        self.obj = dict()
+
+    def create_output(self, module, result):
+        if isinstance(result, dict) or isinstance(result, list):
+            self.obj[module] = result
+        elif isinstance(result, basestring) or isinstance(result, buffer):
+            self.obj[module] = result
+        else:
+            logging.debug("Unmanageable output: %s", repr(result))
+
+    def finalize(self):
+        print json.dumps(self.obj, indent=2)
+
+
+class FilesOutputManager(object):
 
     def __init__(self):
         self.directory = 'result_test'
@@ -92,7 +109,7 @@ class OutputManager(object):
         pass
 
 
-class ArchiveOutputManager(OutputManager):
+class ArchiveOutputManager(FilesOutputManager):
 
     def finalize(self):
         with tarfile.open('%s.tar' % self.directory, 'w') as tar:
@@ -107,10 +124,13 @@ class MailOutputManager(ArchiveOutputManager):
 
 
 def make_output_manager(name):
+    if name == 'json':
+        return JsonOutputManager()
     if name == 'file':
-        return OutputManager()
+        return FilesOutputManager()
     if name == 'tar':
         return ArchiveOutputManager()
+    assert False, "OutputManager not available"
 
 
 def main():

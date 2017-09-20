@@ -15,24 +15,55 @@
 
 import subprocess
 import re
+import os
+
+
+def readfile(path):
+    try:
+        return open(path, 'r').read()
+    except:
+        return ""
 
 
 class OioProcessInfo(object):
 
     def run(self, **kwargs):
         out = []
-        out.append(subprocess.check_output(['ps', 'auxf']))
-        p = re.compile('\d+')
-        for a in out[0].split('\n'):
-            if kwargs.get('ns') in a:
-                integer = p.search(a)
-                if not integer:
-                    break
-                pid = integer.group(0)
-                out.append(subprocess.check_output(['cat',
-                                                    '/proc/%s/cmdline' % pid]))
-                out.append(subprocess.check_output(['cat',
-                                                    '/proc/%s/environ' % pid]))
-                out.append(subprocess.check_output(['ls', '-ail',
-                                                    '/proc/%s/fd' % pid]))
+        ns = kwargs.get('ns')
+        if not ns:
+            return out
+        for a in subprocess.check_output(['ps', '-o', 'pid,cmd']).split('\n')[1:]:
+            a = a.strip()
+            if not a:
+                continue
+            tok = a.split()
+            pid, cmd = tok[0], ' '.join(tok[1:])
+            if ns not in cmd:
+                continue
+            pid = int(pid)
+            proc = dict()
+            proc['pid'] = pid
+            proc['cmd'] = cmd
+            proc['env'] = readfile('/proc/%s/environ' % pid)
+            proc['fd'] = os.listdir('/proc/%s/fd' % pid)
+            proc['limits'] = readfile('/proc/%s/limits' % pid)
+            out.append(proc)
         return out
+
+
+class OioLocalConfig(object):
+
+    def run(self, **kwargs):
+        out = dict()
+        output = subprocess.check_output(['oio-cluster', '--local-cfg'])
+        p = re.compile('([^/]+)/([^=]+)=(.*)$')
+        for line in output.split('\n'):
+            match = p.match(line)
+            if not match:
+                continue
+            ns, k, v = match.group(1), match.group(2), match.group(3)
+            if ns not in out:
+                out[ns] = dict()
+            out[ns][k] = v
+        return out
+

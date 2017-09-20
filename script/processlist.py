@@ -19,5 +19,5 @@ import subprocess
 class ProcessListing(object):
 
     def run(self, **kwargs):
-        out = subprocess.check_output(['ps', 'auxf'])
+        out = subprocess.check_output(['ps', 'aux']).split('\n')
         return out

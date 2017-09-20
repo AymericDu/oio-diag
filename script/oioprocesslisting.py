@@ -20,5 +20,5 @@ class OioProcessListing(object):
 
     def run(self, **kwargs):
         out = subprocess.check_output(['gridinit_cmd', '-S',
-                                       kwargs.get('gridinit_sock'), 'status2'])
+                 kwargs.get('gridinit_sock'), 'status2']).split('\n')
         return out

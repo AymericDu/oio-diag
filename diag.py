@@ -16,6 +16,7 @@
 
 import argparse
 import os
+import json
 import logging
 import pkg_resources
 import shutil
@@ -78,20 +79,12 @@ class OutputManager(object):
             os.makedirs(self.directory)
 
     def create_output(self, module, result):
-        if isinstance(result, dict):
-            for k, v in result.iteritems():
-                with open('%s/%s.%s' % (self.directory,
-                                        module, k), 'w') as output_file:
-                    output_file.write(v)
-        elif isinstance(result, list):
-            for i, v in enumerate(result):
-                with open('%s/%s.%d' % (self.directory,
-                                        module, i), 'w') as output_file:
-                    output_file.write(v)
+        if isinstance(result, dict) or isinstance(result, list):
+            with open('%s/%s' % (self.directory, module), 'w') as f:
+                json.dump(result, f, indent=2)
         elif isinstance(result, basestring) or isinstance(result, buffer):
-            with open('%s/%s' % (self.directory,
-                                 module), 'w') as output_file:
-                output_file.write(result)
+            with open('%s/%s' % (self.directory, module), 'w') as f:
+                f.write(result)
         else:
             logging.debug("Unmanageable output: %s", repr(result))
 

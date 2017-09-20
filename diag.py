@@ -16,6 +16,7 @@
 
 import argparse
 import os
+import logging
 import pkg_resources
 import shutil
 import tarfile
@@ -26,6 +27,7 @@ output_list = ['file', 'tar']
 def load_modules(group_name):
     modules = []
     for entry_point in pkg_resources.iter_entry_points(group_name):
+        logging.debug("Entry point found: %s", entry_point)
         modules.append(entry_point.load(require=False))
     return modules
 
@@ -81,16 +83,17 @@ class OutputManager(object):
                 with open('%s/%s.%s' % (self.directory,
                                         module, k), 'w') as output_file:
                     output_file.write(v)
-            return
-        if isinstance(result, list):
+        elif isinstance(result, list):
             for i, v in enumerate(result):
                 with open('%s/%s.%d' % (self.directory,
                                         module, i), 'w') as output_file:
                     output_file.write(v)
-        else:
+        elif isinstance(result, basestring) or isinstance(result, buffer):
             with open('%s/%s' % (self.directory,
                                  module), 'w') as output_file:
                 output_file.write(result)
+        else:
+            logging.debug("Unmanageable output: %s", repr(result))
 
     def finalize(self):
         pass
@@ -118,6 +121,9 @@ def make_output_manager(name):
 
 
 def main():
+    logging.basicConfig(format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S',
+                        level=logging.DEBUG)
     args = build_arg_parser().parse_args()
     kwargs = {}
     if args.ns is not None:
@@ -125,9 +131,10 @@ def main():
     if args.gridinit_sock is not None:
         kwargs['gridinit_sock'] = args.gridinit_sock
 
-    outputManager = make_output_manager(args.output)
     tools_modules = load_modules("oio.tools")
+    outputManager = make_output_manager(args.output)
     for tool in tools_modules:
+        logging.debug("Running tool %s", repr(tool))
         result = tool().run(**kwargs)
         outputManager.create_output(tool.__name__, result)
 

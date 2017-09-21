@@ -13,18 +13,50 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-from oio.diag import cmd
+import os
+import re
 
 
 class CoreDump(object):
 
+    def _replace_regex(self, regex):
+        replace = {"%%": "%",
+                   "%c": "\d+",
+                   "%d": "\d+",
+                   "%e": "[a-zA-Z-_.]+",
+                   "%g": "\d+",
+                   "%h": "\w+",
+                   "%i": "\d+",
+                   "%I": "\d+",
+                   "%p": "\d+",
+                   "%P": "\d+",
+                   "%s": "\d+",
+                   "%t": "\d+",
+                   "%u": "\d+",
+                   "%E": "[a-zA-Z-_.!]+",
+                   }
+        for k, v in replace.iteritems():
+            regex = regex.replace(k, v)
+        regex = ''.join(['^', regex.strip(), '$'])
+        return regex
+
     def run(self, **kwargs):
         out = {}
-        tmp = subprocess.check_output(['cat', '/proc/sys/kernel/core_pattern'])
-        if '|' in tmp:
+        tmp = open("/proc/sys/kernel/core_pattern").read()
+        # if it start by | it is processed by a software
+        if '|' == tmp[0]:
             return
-        for a in cmd(['ls', '/tmp']):
-            if 'core.' in a:
-                out[a] = (subprocess.check_output(['cat', '/tmp/%s' % a]))
+
+        last_slash = tmp.rfind('/')
+        path = tmp[:last_slash]
+        regex = self._replace_regex(tmp[last_slash + 1:])
+        p = re.compile(regex)
+        cores = []
+        files = os.listdir(path)
+        for file in files:
+            if p.match(file):
+                cores.append(file)
+
+        for core in cores:
+            out[core.replace('/', '!')] = open('/'.join([path, core])).read()
         return out

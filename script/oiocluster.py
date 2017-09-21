@@ -13,8 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-from oio.diag import cmd
+import json
+import urllib3
+from oio.diag import cmd, get_all_services, get_local_config, map_type
+
+http = urllib3.PoolManager()
 
 
 class Gridinit(object):
@@ -26,29 +29,61 @@ class Gridinit(object):
         return cmd(['gridinit_cmd', '-S', sock, 'status2'])
 
 
+class LiveConfig(object):
+
+    def run(self, **kwargs):
+        nsname = kwargs.get('ns')
+        if not nsname:
+            return []
+        out = dict()
+        cfg = get_local_config()
+        allsrv = get_all_services(nsname)
+        proxy = cfg[nsname]['proxy']
+        url = 'http://%s/v3.0/forward/config?id=' % proxy
+        for srv in allsrv:
+            if not srv['Type'].startswith('meta'):
+                continue
+            r = http.request('GET', ''.join((url, srv['Id'])),
+                             headers={'Connection': 'close'},
+                             fields={})
+            parsed = json.loads(r.data)
+            for k in parsed.keys():
+                parsed[k] = map_type(parsed[k])
+            out[srv['Id']] = parsed
+        return out
+
+
+class LiveVersions(object):
+
+    def run(self, **kwargs):
+        nsname = kwargs.get('ns')
+        if not nsname:
+            return []
+        out = dict()
+        cfg = get_local_config()
+        allsrv = get_all_services(nsname)
+        proxy = cfg[nsname]['proxy']
+        url = 'http://%s/v3.0/forward/version?id=' % proxy
+        for srv in allsrv:
+            if not srv['Type'].startswith('meta'):
+                continue
+            r = http.request('POST', ''.join((url, srv['Id'])),
+                             headers={'Connection': 'close'},
+                             fields={})
+            out[srv['Id']] = r.data
+        return out
+
+
 class ClusterList(object):
 
     def run(self, **kwargs):
         nsname = kwargs.get('ns')
         if not nsname:
             return []
-        try:
-            return cmd(['oio-cluster', '-r', nsname])
-        except:
-            return "namespace down: %s" % nsname
+        return get_all_services(nsname)
 
 
 class LocalConfig(object):
 
     def run(self, **kwargs):
-        out = dict()
-        p = re.compile('([^/]+)/([^=]+)=(.*)$')
-        for line in cmd(['oio-cluster', '--local-cfg']):
-            match = p.match(line)
-            if not match:
-                continue
-            ns, k, v = match.group(1), match.group(2), match.group(3)
-            if ns not in out:
-                out[ns] = dict()
-            out[ns][k] = v
-        return out
+        return get_local_config()

@@ -14,6 +14,54 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+import re
+import json
+
+cache = dict()
+
+
+def put(k, v):
+    cache[k] = v
+
+
+def get(k):
+    return cache.get(k, None)
+
+
+def map_type(v):
+    for t in (int, float, str):
+        try:
+            return t(v)
+        except:
+            pass
+
+
+def get_local_config():
+    cfg = get('cfg')
+    if cfg:
+        return cfg
+    cfg = dict()
+    p = re.compile('([^/]+)/([^=]+)=(.*)$')
+    for line in cmd(['oio-cluster', '--local-cfg']):
+        match = p.match(line)
+        if not match:
+            continue
+        ns, k, v = match.group(1), match.group(2), match.group(3)
+        if ns not in cfg:
+            cfg[ns] = dict()
+        cfg[ns][k] = map_type(v)
+    return cfg
+
+
+def get_all_services(nsname):
+    """Cache and return the list of services"""
+    allsrv = get('allsrv')
+    if not allsrv:
+        allsrv = call(['openio', 'cluster', 'list',
+                       '--oio-ns', nsname, '-f', 'json'])
+        allsrv = json.loads(allsrv)
+        put('allsrv', allsrv)
+    return allsrv
 
 
 class FilePath(object):

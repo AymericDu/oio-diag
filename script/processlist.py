@@ -19,4 +19,4 @@ from oio.diag import cmd
 class ProcessListing(object):
 
     def run(self, **kwargs):
-        return cmd(['ps', 'aux'])
+        return cmd(['ps', '-e', '-o', 'pid,uid,rss,vsz,%cpu,state,cmd'])

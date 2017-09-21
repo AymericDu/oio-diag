@@ -13,11 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
-
-def cmd(args):
-    return subprocess.check_output(args).split('\n')
+from oio.diag import cmd, cmdraw, call, readlist
 
 
 def map_type(v):
@@ -32,7 +28,7 @@ class SELinux(object):
 
     def run(self, **kwargs):
         try:
-            return subprocess.check_output(['getenforce'])
+            return call(['getenforce'])
         except:
             return ""
 
@@ -42,9 +38,42 @@ class Sysctl(object):
     def run(self, **kwargs):
         out = dict()
         for line in cmd(['sysctl', '-a']):
-            line = line.strip()
-            if not line:
-                continue
             k, v = line.split('=')
             out[k.strip()] = map_type(v.strip())
         return out
+
+
+class Uptime(object):
+
+    def run(self, **kwargs):
+        return call(['uptime'])
+
+
+class Uname(object):
+
+    def run(self, **kwargs):
+        return call(['uname', '-a'])
+
+
+class Free(object):
+
+    def run(self, **kwargs):
+        return cmdraw(['free'])
+
+
+class Mounts(object):
+
+    def run(self, **kwargs):
+        return readlist('/proc/mounts')
+
+
+class Partitions(object):
+
+    def run(self, **kwargs):
+        return readlist('/proc/partitions')
+
+
+class CpuInfo(object):
+
+    def run(self, **kwargs):
+        return readlist('/proc/cpuinfo')

@@ -13,15 +13,42 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+import re
+from oio.diag import cmd
 
 
-def cmd(args):
-    return subprocess.check_output(args).split('\n')
-
-
-class OioProcessListing(object):
+class Gridinit(object):
 
     def run(self, **kwargs):
         sock = kwargs.get('gridinit_sock')
+        if not sock:
+            return []
         return cmd(['gridinit_cmd', '-S', sock, 'status2'])
+
+
+class ClusterList(object):
+
+    def run(self, **kwargs):
+        nsname = kwargs.get('ns')
+        if not nsname:
+            return []
+        try:
+            return cmd(['oio-cluster', '-r', nsname])
+        except:
+            return "namespace down: %s" % nsname
+
+
+class LocalConfig(object):
+
+    def run(self, **kwargs):
+        out = dict()
+        p = re.compile('([^/]+)/([^=]+)=(.*)$')
+        for line in cmd(['oio-cluster', '--local-cfg']):
+            match = p.match(line)
+            if not match:
+                continue
+            ns, k, v = match.group(1), match.group(2), match.group(3)
+            if ns not in out:
+                out[ns] = dict()
+            out[ns][k] = v
+        return out

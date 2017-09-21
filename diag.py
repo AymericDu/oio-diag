@@ -16,15 +16,15 @@
 
 import argparse
 import os
-import json
 import logging
 import pkg_resources
 import shutil
-import tarfile
 import tempfile
 from oio.diag import FilePath
 
 output_list = ['json', 'file', 'tar']
+
+tar_top_directory = 'diag'
 
 
 def load_modules(group_name):
@@ -87,7 +87,8 @@ class JsonOutputManager(object):
             logging.debug("Unmanageable output: %s", repr(result))
 
     def finalize(self):
-        print json.dumps(self.obj, indent=2, sort_keys=True)
+        from json import dumps
+        print dumps(self.obj, indent=2, sort_keys=True)
 
 
 class FilesOutputManager(object):
@@ -97,8 +98,9 @@ class FilesOutputManager(object):
 
     def create_output(self, module, result):
         if isinstance(result, dict) or isinstance(result, list):
+            from json import dump
             with open('%s/%s.json' % (self.directory, module), 'w') as f:
-                json.dump(result, f, indent=2, sort_keys=True)
+                dump(result, f, indent=2, sort_keys=True)
         elif isinstance(result, basestring) or isinstance(result, buffer):
             with open('%s/%s.txt' % (self.directory, module), 'w') as f:
                 f.write(result)
@@ -115,9 +117,16 @@ class FilesOutputManager(object):
 class ArchiveOutputManager(FilesOutputManager):
 
     def finalize(self):
+        import tarfile
         archive = '%s.tar' % self.directory
         with tarfile.open(archive, 'w') as tar:
-            tar.add(self.directory)
+            # Custom-Walk that rewrite the archive name pf each entity
+            for base, dirs, files in os.walk(self.directory):
+                # Replace the random directory with a fixed value
+                bn = base.replace(self.directory, tar_top_directory)
+                for f in files:
+                    tar.add('/'.join((base, f)),
+                            arcname='/'.join((bn, f)))
         shutil.rmtree(self.directory)
         print archive
 

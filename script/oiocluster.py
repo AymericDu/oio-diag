@@ -15,7 +15,7 @@
 
 import json
 import urllib3
-from oio.diag import cmd, call, get_all_services, get_local_config
+from oio.diag import cmd, call, get_all_services, get_local_config, map_type
 
 http = urllib3.PoolManager()
 
@@ -46,7 +46,10 @@ class LiveConfig(object):
             r = http.request('GET', ''.join((url, srv['Id'])),
                              headers={'Connection': 'close'},
                              fields={})
-            out[srv['Id']] = json.loads(r.data)
+            parsed = json.loads(r.data)
+            for k in parsed.keys():
+                parsed[k] = map_type(parsed[k])
+            out[srv['Id']] = parsed
         return out
 
 

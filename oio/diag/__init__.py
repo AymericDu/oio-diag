@@ -28,6 +28,14 @@ def get(k):
     return cache.get(k, None)
 
 
+def map_type(v):
+    for t in (int, float, str):
+        try:
+            return t(v)
+        except:
+            pass
+
+
 def get_local_config():
     cfg = get('cfg')
     if cfg:
@@ -41,7 +49,7 @@ def get_local_config():
         ns, k, v = match.group(1), match.group(2), match.group(3)
         if ns not in cfg:
             cfg[ns] = dict()
-        cfg[ns][k] = v
+        cfg[ns][k] = map_type(v)
     return cfg
 
 

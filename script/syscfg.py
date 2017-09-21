@@ -13,15 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from oio.diag import cmd, cmdraw, call, readlist
-
-
-def map_type(v):
-    for t in (int, float, str):
-        try:
-            return t(v)
-        except:
-            pass
+from oio.diag import cmd, cmdraw, call, readlist, map_type
 
 
 class SELinux(object):

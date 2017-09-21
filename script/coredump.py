@@ -15,6 +15,7 @@
 
 import os
 import re
+from oio.diag import FileSet
 
 
 class CoreDump(object):
@@ -41,7 +42,6 @@ class CoreDump(object):
         return regex
 
     def run(self, **kwargs):
-        out = {}
         tmp = open("/proc/sys/kernel/core_pattern").read()
         # if it start by | it is processed by a software
         if '|' == tmp[0]:
@@ -57,6 +57,4 @@ class CoreDump(object):
             if p.match(file):
                 cores.append(file)
 
-        for core in cores:
-            out[core.replace('/', '!')] = open('/'.join([path, core])).read()
-        return out
+        return FileSet(cores)

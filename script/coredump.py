@@ -47,33 +47,16 @@ class CoreDump(object):
         if '|' == tmp[0]:
             return
 
-        regex = self._replace_regex(tmp)
-        regex_index = 0
-        result_list = ["/"]
-        while True:
-            tmp_result_list = []
-            tmp_ri = regex[regex_index:].find('/')
-            regex_index = tmp_ri + regex_index + 1 if tmp_ri != -1 else -1
-            if regex_index != -1:
-                p = re.compile(regex[:regex_index])
-            else:
-                p = re.compile(regex)
-            for folder in result_list:
-                try:
-                    files = os.listdir(folder)
-                except OSError:
-                    if p.match(folder):
-                        tmp_result_list.append(folder)
-                    continue
-                for elem in files:
-                    if p.match('/'.join([folder, elem])):
-                        separator = "/" if folder != "/" else ""
-                        tmp_result_list.append(separator.join([folder, elem]))
+        last_slash = tmp.rfind('/')
+        path = tmp[:last_slash]
+        regex = self._replace_regex(tmp[last_slash + 1:])
+        p = re.compile(regex)
+        cores = []
+        files = os.listdir(path)
+        for file in files:
+            if p.match(file):
+                cores.append(file)
 
-            result_list = tmp_result_list
-            if regex_index == -1:
-                break
-
-        for elem in result_list:
-            out[elem.replace('/', '!')] = open(elem).read()
+        for core in cores:
+            out[core.replace('/', '!')] = open('/'.join([path, core])).read()
         return out

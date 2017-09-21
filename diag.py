@@ -27,11 +27,12 @@ output_list = ['json', 'file', 'tar']
 tar_top_directory = 'diag'
 
 
-def load_modules(group_name):
+def load_modules(group_names):
     modules = []
-    for entry_point in pkg_resources.iter_entry_points(group_name):
-        logging.debug("Entry point found: %s", entry_point)
-        modules.append(entry_point.load(require=False))
+    for gn in group_names:
+        for ep in pkg_resources.iter_entry_points(gn):
+            logging.debug("Entry point found: %s/%s", gn, ep.name)
+            modules.append((ep.name, ep.load(require=False)))
     return modules
 
 
@@ -79,14 +80,22 @@ class JsonOutputManager(object):
         self.obj = dict()
 
     def create_output(self, module, result):
+        path = module.split('_')
+        h = self.obj
+        for token in path[:-1]:
+            if token not in h:
+                h[token] = dict()
+            h = h[token]
+        k = path[-1]
+
         if isinstance(result, dict) or isinstance(result, list):
-            self.obj[module] = result
+            h[k] = result
         elif isinstance(result, basestring) or isinstance(result, buffer):
-            self.obj[module] = result
+            h[k] = result
         elif isinstance(result, FilePath):
-            self.obj[module] = str(result)
+            h[k] = str(result)
         elif isinstance(result, FileSet):
-            self.obj[module] = [str(x) for x in result]
+            h[k] = [str(x) for x in result]
         else:
             logging.debug("Unmanageable output: %s", repr(result))
 
@@ -174,18 +183,19 @@ def main():
     if args.gridinit_sock is not None:
         kwargs['gridinit_sock'] = args.gridinit_sock
 
-    tools_modules = load_modules("oio.tools")
+    tools_modules = load_modules(["sys", "oio.local", "oio.platform"])
     outputManager = make_output_manager(args.output)
-    for tool in tools_modules:
+    for name, tool in tools_modules:
         logging.debug("Running tool %s", repr(tool))
         result = None
         try:
             result = tool().run(**kwargs)
         except:
-            import traceback, sys
-            et, ev, etb = sys.exc_info()
-            result = ''.join(traceback.format_exception(et, ev, etb))
-        outputManager.create_output(tool.__name__, result)
+            from traceback import format_exception
+            from sys import exc_info
+            et, ev, etb = exc_info()
+            result = ''.join(format_exception(et, ev, etb))
+        outputManager.create_output(name, result)
 
     outputManager.finalize()
 

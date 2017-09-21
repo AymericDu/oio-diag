@@ -166,7 +166,7 @@ def make_output_manager(name):
 def main():
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
     args = build_arg_parser().parse_args()
     kwargs = {}
     if args.ns is not None:
@@ -178,7 +178,13 @@ def main():
     outputManager = make_output_manager(args.output)
     for tool in tools_modules:
         logging.debug("Running tool %s", repr(tool))
-        result = tool().run(**kwargs)
+        result = None
+        try:
+            result = tool().run(**kwargs)
+        except:
+            import traceback, sys
+            et, ev, etb = sys.exc_info()
+            result = ''.join(traceback.format_exception(et, ev, etb))
         outputManager.create_output(tool.__name__, result)
 
     outputManager.finalize()

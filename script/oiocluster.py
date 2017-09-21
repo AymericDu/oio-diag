@@ -15,7 +15,7 @@
 
 import json
 import urllib3
-from oio.diag import cmd, call, get_all_services, get_local_config, map_type
+from oio.diag import cmd, get_all_services, get_local_config, map_type
 
 http = urllib3.PoolManager()
 

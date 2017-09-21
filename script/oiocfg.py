@@ -14,14 +14,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from oio.diag import FileSet, FilePath
+from oio.diag import FileSet
 
 
 def _walk(paths):
     for path in paths:
         for base, dirs, files in os.walk(path):
             for f in files:
-                yield FilePath('/'.join((base, f)))
+                yield '/'.join((base, f))
 
 
 class EtcFiles(object):

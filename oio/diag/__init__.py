@@ -20,7 +20,7 @@ import json
 cache = dict()
 
 
-def put(k,v):
+def put(k, v):
     cache[k] = v
 
 
@@ -58,7 +58,7 @@ def get_all_services(nsname):
     allsrv = get('allsrv')
     if not allsrv:
         allsrv = call(['openio', 'cluster', 'list',
-                    '--oio-ns', nsname, '-f', 'json'])
+                       '--oio-ns', nsname, '-f', 'json'])
         allsrv = json.loads(allsrv)
         put('allsrv', allsrv)
     return allsrv

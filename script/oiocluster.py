@@ -13,9 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 import json
-from oio.diag import cmd, call
+import urllib3
+from oio.diag import cmd, call, get_all_services, get_local_config
+
+http = urllib3.PoolManager()
 
 
 class Gridinit(object):
@@ -27,28 +29,58 @@ class Gridinit(object):
         return cmd(['gridinit_cmd', '-S', sock, 'status2'])
 
 
+class LiveConfig(object):
+
+    def run(self, **kwargs):
+        nsname = kwargs.get('ns')
+        if not nsname:
+            return []
+        out = dict()
+        cfg = get_local_config()
+        allsrv = get_all_services(nsname)
+        proxy = cfg[nsname]['proxy']
+        url = 'http://%s/v3.0/forward/config?id=' % proxy
+        for srv in allsrv:
+            if not srv['Type'].startswith('meta'):
+                continue
+            r = http.request('GET', ''.join((url, srv['Id'])),
+                             headers={'Connection': 'close'},
+                             fields={})
+            out[srv['Id']] = json.loads(r.data)
+        return out
+
+
+class LiveVersions(object):
+
+    def run(self, **kwargs):
+        nsname = kwargs.get('ns')
+        if not nsname:
+            return []
+        out = dict()
+        cfg = get_local_config()
+        allsrv = get_all_services(nsname)
+        proxy = cfg[nsname]['proxy']
+        url = 'http://%s/v3.0/forward/version?id=' % proxy
+        for srv in allsrv:
+            if not srv['Type'].startswith('meta'):
+                continue
+            r = http.request('POST', ''.join((url, srv['Id'])),
+                             headers={'Connection': 'close'},
+                             fields={})
+            out[srv['Id']] = r.data
+        return out
+
+
 class ClusterList(object):
 
     def run(self, **kwargs):
         nsname = kwargs.get('ns')
         if not nsname:
             return []
-        out = call(['openio', 'cluster', 'list',
-                    '--oio-ns', nsname, '-f', 'json'])
-        return json.loads(out)
+        return get_all_services(nsname)
 
 
 class LocalConfig(object):
 
     def run(self, **kwargs):
-        out = dict()
-        p = re.compile('([^/]+)/([^=]+)=(.*)$')
-        for line in cmd(['oio-cluster', '--local-cfg']):
-            match = p.match(line)
-            if not match:
-                continue
-            ns, k, v = match.group(1), match.group(2), match.group(3)
-            if ns not in out:
-                out[ns] = dict()
-            out[ns][k] = v
-        return out
+        return get_local_config()

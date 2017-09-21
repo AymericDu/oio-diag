@@ -30,6 +30,17 @@ class FilePath(object):
         return str(self.path)
 
 
+class FileSet(object):
+
+    def __init__(self, fp):
+        self.items = list(fp)
+        import logging
+        logging.warn("%d items", len(self.items))
+
+    def __iter__(self):
+        return iter(sorted(self.items))
+
+
 def call(args):
     """Shortener around subprocess.check_output()"""
     return subprocess.check_output(args)

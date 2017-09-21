@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-import os
+from os import environ, makedirs, walk
 import logging
 import pkg_resources
 import shutil
 import tempfile
-from oio.diag import FilePath
+from oio.diag import FilePath, FileSet
 
 output_list = ['json', 'file', 'tar']
 
@@ -41,7 +41,7 @@ def env(*vars, **kwargs):
     returns the default defined in kwargs.
     """
     for v in vars:
-        value = os.environ.get(v, None)
+        value = environ.get(v, None)
         if value:
             return value
     return kwargs.get('default', '')
@@ -83,6 +83,10 @@ class JsonOutputManager(object):
             self.obj[module] = result
         elif isinstance(result, basestring) or isinstance(result, buffer):
             self.obj[module] = result
+        elif isinstance(result, FilePath):
+            self.obj[module] = str(result)
+        elif isinstance(result, FileSet):
+            self.obj[module] = [str(x) for x in result]
         else:
             logging.debug("Unmanageable output: %s", repr(result))
 
@@ -107,6 +111,18 @@ class FilesOutputManager(object):
         elif isinstance(result, FilePath):
             with open('%s/%s' % (self.directory, module), 'w') as f:
                 f.write(result)
+        elif isinstance(result, FileSet):
+            makedirs('%s/%s' % (self.directory, module))
+            for fp in result:
+                if not isinstance(fp, FilePath):
+                    continue
+                srcpath = str(fp)
+                from os.path import isfile
+                if not isfile(srcpath):
+                    continue
+                dstfile = srcpath.replace('/', '@')
+                dstpath = '%s/%s/%s' % (self.directory, module, dstfile)
+                shutil.copyfile(srcpath, dstpath)
         else:
             logging.debug("Unmanageable output: %s", repr(result))
 
@@ -121,7 +137,7 @@ class ArchiveOutputManager(FilesOutputManager):
         archive = '%s.tar' % self.directory
         with tarfile.open(archive, 'w') as tar:
             # Custom-Walk that rewrite the archive name pf each entity
-            for base, dirs, files in os.walk(self.directory):
+            for base, dirs, files in walk(self.directory):
                 # Replace the random directory with a fixed value
                 bn = base.replace(self.directory, tar_top_directory)
                 for f in files:

@@ -22,6 +22,7 @@ import pkg_resources
 import shutil
 import tarfile
 import tempfile
+from oio.diag import FilePath
 
 output_list = ['json', 'file', 'tar']
 
@@ -96,9 +97,12 @@ class FilesOutputManager(object):
 
     def create_output(self, module, result):
         if isinstance(result, dict) or isinstance(result, list):
-            with open('%s/%s' % (self.directory, module), 'w') as f:
+            with open('%s/%s.json' % (self.directory, module), 'w') as f:
                 json.dump(result, f, indent=2, sort_keys=True)
         elif isinstance(result, basestring) or isinstance(result, buffer):
+            with open('%s/%s.txt' % (self.directory, module), 'w') as f:
+                f.write(result)
+        elif isinstance(result, FilePath):
             with open('%s/%s' % (self.directory, module), 'w') as f:
                 f.write(result)
         else:

@@ -13,11 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+from oio.diag import cmd
 
 
 class ProcessListing(object):
 
     def run(self, **kwargs):
-        out = subprocess.check_output(['ps', 'aux']).split('\n')
-        return out
+        return cmd(['ps', 'aux'])

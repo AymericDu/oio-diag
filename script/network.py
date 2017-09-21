@@ -14,43 +14,64 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from oio.diag import cmd, cmdraw
 
 
-def cmd(args):
-    return subprocess.check_output(args).split('\n')
-
-
-class Network(object):
+class Interfaces(object):
 
     def run(self, **kwargs):
-        out = dict()
+        out = list()
+        for itf in cmdraw(['ip', 'addr', 'list']):
+            out.append(itf)
+        return out
 
-        out['itf'] = list()
-        for itf in cmd(['ip', 'addr', 'list']):
-            out['itf'].append(itf)
 
-        out['routes'] = list()
+class Routes(object):
+
+    def run(self, **kwargs):
+        out = list()
         for r in cmd(['ip', 'route']):
-            if not r:
-                continue
-            out['routes'].append(r)
+            out.append(r)
+        return out
 
-        out['stat'] = list()
-        for st in cmd(['netstat', '-st']):
-            out['stat'].append(st)
 
-        out['udp'] = list()
-        out['tcp'] = {'listen': list(), 'counters': dict()}
-        counters = out['tcp']['counters']
+class Netstat(object):
+
+    def run(self, **kwargs):
+        out = list()
+        for st in cmdraw(['netstat', '-st']):
+            out.append(st)
+        return out
+
+
+class Cnx(object):
+
+    def run(self, **kwargs):
+        udp = list()
+        counters = dict()
+        listen = list()
         for i, cnx in enumerate(cmd(['netstat', '-tupan'])):
-            if not cnx or i < 1:
+            if i < 1:
                 continue
             if cnx.startswith('udp'):
-                out['udp'].append(cnx)
+                udp.append(cnx)
             elif cnx.startswith('tcp'):
                 st = cnx.split(None, 6)[-2]
                 counters[st] = counters.get(st, 0) + 1
                 if st == 'LISTEN':
-                    out['tcp']['listen'].append(cnx)
+                    listen.append(cnx)
+        return {'udp': udp, 'tcp': {'listen': listen, 'counters': counters}}
 
+
+class IpTable(object):
+
+    def run(self, **kwargs):
+        out = subprocess.check_output(['iptables-save'])
+        return out
+
+
+class Ip6Table(object):
+
+    def run(self, **kwargs):
+        out = subprocess.check_output(['ip6tables-save'])
         return out

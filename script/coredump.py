@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from oio.diag import cmd
 
 
 class CoreDump(object):
@@ -23,7 +24,7 @@ class CoreDump(object):
         tmp = subprocess.check_output(['cat', '/proc/sys/kernel/core_pattern'])
         if '|' in tmp:
             return
-        for a in subprocess.check_output(['ls', '/tmp']).split('\n'):
+        for a in cmd(['ls', '/tmp']):
             if 'core.' in a:
                 out[a] = (subprocess.check_output(['cat', '/tmp/%s' % a]))
         return out

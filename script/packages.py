@@ -13,19 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
-
-def cmd(args):
-    return subprocess.check_output(args).split('\n')
-
-
-def hascmd(cmd):
-    try:
-        subprocess.check_output(['/usr/bin/which', cmd])
-        return True
-    except:
-        return False
+from oio.diag import hascmd, cmd
 
 
 class Packages(object):

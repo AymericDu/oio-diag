@@ -13,20 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-import re
 import os
-
-
-def cmd(args):
-    return subprocess.check_output(args).split('\n')
-
-
-def readfile(path):
-    try:
-        return open(path, 'r').read()
-    except:
-        return ""
+from oio.diag import readfile, cmd
 
 
 class OioProcessInfo(object):
@@ -36,9 +24,8 @@ class OioProcessInfo(object):
         ns = kwargs.get('ns')
         if not ns:
             return out
-        for a in cmd(['ps', '-o', 'pid,cmd'])[1:]:
-            a = a.strip()
-            if not a:
+        for i, a in enumerate(cmd(['ps', '-o', 'pid,cmd'])):
+            if i <= 1:
                 continue
             tok = a.split()
             pid, cmdline = tok[0], ' '.join(tok[1:])
@@ -53,27 +40,9 @@ class OioProcessInfo(object):
                 pair = pair.strip()
                 if not pair:
                     continue
-                import logging
-                logging.debug('%s', pair)
                 k, v = pair.split('=', 1)
                 proc['env'][k] = v
             proc['fd'] = len(os.listdir('/proc/%s/fd' % pid))
             proc['limits'] = readfile('/proc/%s/limits' % pid).split('\n')
             out.append(proc)
-        return out
-
-
-class OioLocalConfig(object):
-
-    def run(self, **kwargs):
-        out = dict()
-        p = re.compile('([^/]+)/([^=]+)=(.*)$')
-        for line in cmd(['oio-cluster', '--local-cfg']):
-            match = p.match(line)
-            if not match:
-                continue
-            ns, k, v = match.group(1), match.group(2), match.group(3)
-            if ns not in out:
-                out[ns] = dict()
-            out[ns][k] = v
         return out

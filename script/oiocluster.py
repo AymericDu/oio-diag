@@ -14,7 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from oio.diag import cmd
+import json
+from oio.diag import cmd, call
 
 
 class Gridinit(object):
@@ -32,10 +33,9 @@ class ClusterList(object):
         nsname = kwargs.get('ns')
         if not nsname:
             return []
-        try:
-            return cmd(['oio-cluster', '-r', nsname])
-        except:
-            return "namespace down: %s" % nsname
+        out = call(['openio', 'cluster', 'list',
+                    '--oio-ns', nsname, '-f', 'json'])
+        return json.loads(out)
 
 
 class LocalConfig(object):

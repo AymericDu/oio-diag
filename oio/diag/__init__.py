@@ -33,9 +33,14 @@ class FilePath(object):
 class FileSet(object):
 
     def __init__(self, fp):
-        self.items = list(fp)
-        import logging
-        logging.warn("%d items", len(self.items))
+        self.items = list()
+        for f in fp:
+            if isinstance(f, str):
+                self.items.append(FilePath(str(f)))
+            elif isinstance(f, FilePath):
+                self.items.append(f)
+            else:
+                raise Exception("BUG")
 
     def __iter__(self):
         return iter(sorted(self.items))

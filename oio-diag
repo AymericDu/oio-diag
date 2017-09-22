@@ -89,7 +89,8 @@ class JsonOutputManager(object):
             h = h[token]
         k = path[-1]
 
-        if isinstance(result, dict) or isinstance(result, list):
+        if isinstance(result, dict) or isinstance(result, list) \
+                or isinstance(result, tuple):
             h[k] = result
         elif isinstance(result, basestring) or isinstance(result, buffer):
             h[k] = result
@@ -111,7 +112,8 @@ class FilesOutputManager(object):
         self.directory = tempfile.mkdtemp(prefix='oio-diag-')
 
     def create_output(self, module, result):
-        if isinstance(result, dict) or isinstance(result, list):
+        if isinstance(result, dict) or isinstance(result, list) \
+                or isinstance(result, tuple):
             from json import dump
             with open('%s/%s.json' % (self.directory, module), 'w') as f:
                 dump(result, f, indent=2, sort_keys=True)

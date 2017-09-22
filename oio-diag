@@ -20,7 +20,8 @@ import logging
 import pkg_resources
 import shutil
 import tempfile
-from oio.diag import FilePath, FileSet
+import oio
+import oiodiag
 
 output_list = ['json', 'file', 'tar']
 
@@ -92,9 +93,9 @@ class JsonOutputManager(object):
             h[k] = result
         elif isinstance(result, basestring) or isinstance(result, buffer):
             h[k] = result
-        elif isinstance(result, FilePath):
+        elif isinstance(result, oiodiag.FilePath):
             h[k] = str(result)
-        elif isinstance(result, FileSet):
+        elif isinstance(result, oiodiag.FileSet):
             h[k] = [str(x) for x in result]
         else:
             logging.debug("Unmanageable output: %s", repr(result))
@@ -117,10 +118,10 @@ class FilesOutputManager(object):
         elif isinstance(result, basestring) or isinstance(result, buffer):
             with open('%s/%s.txt' % (self.directory, module), 'w') as f:
                 f.write(result)
-        elif isinstance(result, FilePath):
+        elif isinstance(result, oiodiag.FilePath):
             with open('%s/%s' % (self.directory, module), 'w') as f:
                 f.write(result)
-        elif isinstance(result, FileSet):
+        elif isinstance(result, oiodiag.FileSet):
             makedirs('%s/%s' % (self.directory, module))
             for fp in result:
                 if not isinstance(fp, FilePath):

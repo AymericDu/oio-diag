@@ -125,7 +125,10 @@ def readfile(path):
 
 def readlist(path):
     """Reads the content of `path` and returns the list of its lines"""
-    return [x for x in readfile(path).split('\n') if x]
+    try:
+        return [l.rstrip() for l in open(path, 'r').readlines()]
+    except:
+        return []
 
 
 def hascmd(cmd):

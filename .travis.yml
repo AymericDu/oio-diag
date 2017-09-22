@@ -1,0 +1,13 @@
+sudo: required
+dist: trusty
+language: python
+install:
+  - sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu trusty-backports main restricted universe multiverse"
+  - sudo apt-add-repository "deb http://mirror.openio.io/pub/repo/openio/sds/15.12/ trusty/"
+  - sudo apt-get update -qq
+  - pip install --upgrade pip setuptools virtualenv tox
+  - pip install --upgrade -r requirements.txt
+  - pip install --upgrade -r test-requirements.txt
+script:
+  - python setup.py install
+  - tox

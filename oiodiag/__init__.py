@@ -32,7 +32,7 @@ def map_type(v):
     for t in (int, float, str):
         try:
             return t(v)
-        except:
+        except Exception:
             pass
 
 
@@ -123,7 +123,7 @@ def readfile(path):
     """Returns the content of `path` or en empty string upon any error"""
     try:
         return open(path, 'r').read()
-    except:
+    except Exception:
         return ""
 
 
@@ -131,7 +131,7 @@ def readlist(path):
     """Reads the content of `path` and returns the list of its lines"""
     try:
         return [l.rstrip() for l in open(path, 'r').readlines()]
-    except:
+    except Exception:
         return []
 
 
@@ -140,5 +140,5 @@ def hascmd(cmd):
     try:
         subprocess.check_output(['/usr/bin/which', cmd])
         return True
-    except:
+    except Exception:
         return False

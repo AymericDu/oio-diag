@@ -21,7 +21,7 @@ class SELinux(object):
     def run(self, **kwargs):
         try:
             return call(['getenforce'])
-        except:
+        except Exception:
             return ""
 
 

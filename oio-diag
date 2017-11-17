@@ -20,7 +20,6 @@ import logging
 import pkg_resources
 import shutil
 import tempfile
-import oio
 import oiodiag
 
 output_list = ['json', 'file', 'tar']
@@ -126,7 +125,7 @@ class FilesOutputManager(object):
         elif isinstance(result, oiodiag.FileSet):
             makedirs('%s/%s' % (self.directory, module))
             for fp in result:
-                if not isinstance(fp, FilePath):
+                if not isinstance(fp, oiodiag.FilePath):
                     continue
                 srcpath = str(fp)
                 from os.path import isfile
@@ -193,7 +192,7 @@ def main():
         result = None
         try:
             result = tool().run(**kwargs)
-        except:
+        except Exception:
             from traceback import format_exception
             from sys import exc_info
             et, ev, etb = exc_info()

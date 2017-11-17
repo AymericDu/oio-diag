@@ -55,7 +55,7 @@ class LiveConfig(object):
             return []
         try:
             return self._run(nsname)
-        except:
+        except Exception:
             return "namespace down: %s" % nsname
 
 
@@ -82,7 +82,7 @@ class LiveVersions(object):
             return []
         try:
             return self._run(nsname)
-        except:
+        except Exception:
             return "namespace down: %s" % nsname
 
 

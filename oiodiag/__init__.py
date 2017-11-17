@@ -94,25 +94,29 @@ class FileSet(object):
         return iter(sorted(self.items))
 
 
-def call(args):
+def pipe(args, stdin=None, **kwargs):
+    return subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE)
+
+
+def call(args, stdin=None, **kwargs):
     """Shortener around subprocess.check_output()"""
-    return subprocess.check_output(args)
+    return subprocess.check_output(args, stdin=stdin)
 
 
-def cmdgen(args):
+def cmdgen(args, **kwargs):
     """Returns a generator for the lines output by call()"""
-    return (x for x in call(args).split('\n') if x)
+    return (x for x in call(args, **kwargs).split('\n') if x)
 
 
-def cmdraw(args):
+def cmdraw(args, **kwargs):
     """Returns a list of the non-empty lines output by the given command"""
-    return list(cmdgen(args))
+    return list(cmdgen(args, **kwargs))
 
 
-def cmd(args):
+def cmd(args, **kwargs):
     """Returns a list of the non-empty and non-blank lines output by the
     given command"""
-    return [x.strip() for x in cmdgen(args) if x.strip()]
+    return [x.strip() for x in cmdgen(args, **kwargs) if x.strip()]
 
 
 def readfile(path):

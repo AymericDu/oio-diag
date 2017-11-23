@@ -15,7 +15,8 @@
 
 import json
 import urllib3
-from oiodiag import cmd, get_all_services, get_local_config, map_type
+import re
+from oiodiag import cmd, get_all_services, get_local_config, map_type, call
 
 http = urllib3.PoolManager()
 
@@ -27,6 +28,22 @@ class Gridinit(object):
         if not sock:
             return []
         return cmd(['gridinit_cmd', '-S', sock, 'status2'])
+
+
+class Systemd(object):
+
+    def run(self, **kwargs):
+        out = {"tasks": None, "limit": None}
+        try:
+            status = str(call(["systemctl", "status", "gridinit"]))
+            tasks = re.search(
+                "Tasks: (?P<tasks>\d+)( \(limit: (?P<limit>\d+)\)|)",
+                status).groupdict()
+            out.update(tasks)
+        except Exception:
+            pass
+        finally:
+            return out
 
 
 class LiveConfig(object):
